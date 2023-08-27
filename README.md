@@ -1,5 +1,5 @@
 # Changes in locomotion and spreading depolarizations after photothrombosis
-Analysis scripts related to the manuscript "Hippocampal Stroke in Freely Behaving Mice Reveals Sex Differences in Presentation and Behavioural Impact of Contralesional Spreading Depolarization"
+Analysis scripts related to the manuscript "Unilateral hippocampal stroke in freely behaving mice reveals sex differences in contralesional spreading depolarization and related behaviour"
 
 ## Prerequisites
 - [MATLAB][MATLAB] (last tested with R2023a)
@@ -15,7 +15,7 @@ Analysis scripts related to the manuscript "Hippocampal Stroke in Freely Behavin
 
 ## Usage
 - Go to the FPA folder and run `startup.m` to add FPA dependencies to the MATLAB search path.
-- Run `analysis1.m` to pre-process fibre-photometry data and get behavior triggered data.
+- Edit `analysis1.m` to match your experimental configuration (e.g. path to files and column numbers, etc) then run to pre-process fibre-photometry data and get behavior triggered data.
 - Run `analysis2.m` to detect peak derivatives in ipsilesional GCaMP6f related to stroke.
 
 ## Changelog

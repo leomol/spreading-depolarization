@@ -30,6 +30,25 @@ sampleRange = [-Inf, Inf];
 thresholdWindow = 5;
 maxXCorrLag = 65;
 
+% Columns corresponding to 465nm and 405nm.
+data = loadData(fpFile);
+time = data(:, 1);
+lesion465 = data(:, 2);
+lesion405 = data(:, 3);
+nonlesion465 = data(:, 4);
+nonlesion405 = data(:, 5);
+
+% Position data from a DLC file.
+% Arena size (cm).
+arenaSize = [50, 50];
+% Video frame rate.
+framerate = 20;
+% Minimum confidence level from DLC.
+dlcThreshold = 0.90;
+% Heat map saturation.
+heatmapSaturation = 5;
+heatmapBinCount = 20;
+
 % General configuration.
 configuration = struct();
 configuration.resamplingFrequency = frequency;
@@ -51,25 +70,6 @@ configuration.f1 = {@mad, baselineEpoch1};
 configuration.conditionEpochs = {'Baseline', baselineEpoch1, 'PreIpsi', [501, 801], 'Ipsi', [751, 851], 'PostIpsi', [801, 1101], 'PreCL1', [760, 830], 'CL', [1385, 1485], 'PostCL1', [2330, 2480], 'Final', [2100,2400]};
 % Use a portion of the data to model and correct for photo-bleaching. Signal uses only baselineEpoch1 while reference uses baselineEpoch1 and baselineEpoch2.
 configuration.baselineEpochs = {baselineEpoch1, [baselineEpoch1, baselineEpoch2]};
-
-% Columns corresponding to 465nm and 405nm.
-data = loadData(fpFile);
-time = data(:, 1);
-lesion465 = data(:, 2);
-lesion405 = data(:, 3);
-nonlesion465 = data(:, 4);
-nonlesion405 = data(:, 5);
-
-% Position data from a DLC file.
-% Arena size (cm).
-arenaSize = [50, 50];
-% Video frame rate.
-framerate = 20;
-% Minimum confidence level from DLC.
-dlcThreshold = 0.90;
-% Heat map saturation.
-heatmapSaturation = 5;
-heatmapBinCount = 20;
 
 % Load behavioral data.
 if isfile(dlcFile)

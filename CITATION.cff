@@ -4,6 +4,7 @@ abstract: "Analysis scripts related to the manuscript Hippocampal Stroke in Free
 message: If you use this software, please cite it.
 type: software
 version: 0.0.1
+doi: 10.5281/zenodo.8303055
 date-released: 2023-08-30
 repository-code: https://github.com/leomol/spreading-depolarizations
 authors:
