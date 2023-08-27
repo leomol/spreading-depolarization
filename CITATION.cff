@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+title: "Changes in locomotion and spreading depolarizations after photothrombosis"
+abstract: "Analysis scripts related to the manuscript Hippocampal Stroke in Freely Behaving Mice Reveals Sex Differences in Presentation and Behavioural Impact of Contralesional Spreading Depolarization"
+message: If you use this software, please cite it.
+type: software
+version: 0.0.1
+date-released: 2023-08-30
+repository-code: https://github.com/leomol/spreading-depolarizations
+authors:
+  - family-names: "Molina"
+    given-names: "Leonardo A."
+    email: "leonardo.molina@ucalgary.ca"
+    affiliation: "University of Calgary"
+    orcid: https://orcid.org/0000-0002-6601-7185
+  - family-names: "Nicola"
+    given-names: "Wilten"
+    email: "wilten.nicola@ucalgary.ca"
+    affiliation: "University of Calgary"
+    orcid: https://orcid.org/0000-0002-8745-2899
+  - family-names: "Boyce"
+    given-names: "Andrew K.J"
+    email: "andrew.boyce@ucalgary.ca"
+    affiliation: "University of Calgary"
+    orcid: https://orcid.org/0000-0002-3708-9884
