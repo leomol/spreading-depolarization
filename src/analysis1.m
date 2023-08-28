@@ -11,12 +11,12 @@
 % Interpolation is not possible at the edges. These data is removed from both position and PF traces.
 
 % 2022-12-07. Leonardo Molina.
-% 2023-08-29. Last modified.
+% 2023-09-01. Last modified.
 
 %% Configuration.
 % Path to files containing fibre-photometry and dlc data (e.g. data/F46-doric.csv, data/F46-dlc.csv, ...)
-fpFile = '../data/F21-doric.csv';
-dlcFile = '../data/F21-dlc.csv';
+fpFile = '../downloads/spreading-depolarization-data-0.0.1/data/F46-doric.csv';
+dlcFile = '../downloads/spreading-depolarization-data-0.0.1/data/F46-dlc.csv';
 [folder, session] = fileparts(fpFile);
 % Number of pixels per cm.
 ppcm = 15.40;

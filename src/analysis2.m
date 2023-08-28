@@ -1,5 +1,5 @@
 % 2023-08-29. Wilten Nicola.
-% 2023-08-29. Last modified.
+% 2023-08-30. Last modified.
 
 %% Setup.
 cons = {'sitting', 'rearing', 'moving', 'grooming'};
@@ -110,10 +110,10 @@ function [time, ipsi, contr, state, dur] = data_loader(paths, anest, cons)
         time = num1(:, 1);
         ntime = length(time); 
         if j == 1 
-        state = zeros(ntime, nCons, nFiles); 
-        dur = [];
-        ipsi = zeros(ntime, nFiles);
-        contr = zeros(ntime, nFiles);
+            state = zeros(ntime, nCons, nFiles); 
+            dur = [];
+            ipsi = zeros(ntime, nFiles);
+            contr = zeros(ntime, nFiles);
         end
         
         ipsi(1:length(num1(:, 2)), j) = num1(:, 2);
