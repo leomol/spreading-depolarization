@@ -1,4 +1,6 @@
 ## Changelog
+* 2023-11-10
+	- Updated code to work with FPA v2.0.0
 * 2023-09-01
 	- Added `startup.m` to download example data from the cloud.
 	- Edited `analysis1.m` to use downloaded data.
