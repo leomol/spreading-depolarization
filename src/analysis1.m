@@ -11,7 +11,7 @@
 % Interpolation is not possible at the edges. These data is removed from both position and PF traces.
 
 % 2022-12-07. Leonardo Molina.
-% 2023-09-01. Last modified.
+% 2023-11-10. Last modified.
 
 %% Configuration.
 % Path to files containing fibre-photometry and dlc data (e.g. data/F46-doric.csv, data/F46-dlc.csv, ...)
@@ -29,9 +29,10 @@ thresholdEpochs = [200, 600];
 sampleRange = [-Inf, Inf];
 thresholdWindow = 5;
 maxXCorrLag = 65;
+peakWindow = 2.5;
 
 % Columns corresponding to 465nm and 405nm.
-data = loadData(fpFile);
+data = CSV.load(fpFile);
 time = data(:, 1);
 lesion465 = data(:, 2);
 lesion405 = data(:, 3);
@@ -51,29 +52,25 @@ heatmapBinCount = 20;
 
 % General configuration.
 configuration = struct();
-configuration.resamplingFrequency = frequency;
-configuration.baselineLowpassFrequency = 0.1;
-configuration.fitReference = false;
-configuration.lowpassFrequency = 10.0;
-configuration.peakSeparation = 0.5;
-configuration.threshold = @(fpa, data) 4 * std(data - movmedian(data, round(thresholdWindow * frequency)));
-configuration.thresholdEpochs = thresholdEpochs;
-configuration.peakDetectionMode = 'prominence';
-configuration.peakWindow = 2.5;
-% Modify baseline correction so that bleaching estimated from reference is subtracted from both signal and reference.
-configuration.signalCorrection = @(fpa, data) data - fpa.referenceBaseline;
-configuration.referenceCorrection = @(fpa, data) data - fpa.referenceBaseline;
-% Use a portion of the data to compute modified z-score.
-configuration.f0 = {@median, baselineEpoch1};
-configuration.f1 = {@mad, baselineEpoch1};
 % Define epochs for analyses (FP & behaviour); Ipsi = IL stroke event; CL or contra = CL seizure/spreading depolarization
-configuration.conditionEpochs = {'Baseline', baselineEpoch1, 'PreIpsi', [501, 801], 'Ipsi', [751, 851], 'PostIpsi', [801, 1101], 'PreCL1', [760, 830], 'CL', [1385, 1485], 'PostCL1', [2330, 2480], 'Final', [2100,2400]};
+configuration.epochs = {'Baseline', baselineEpoch1, 'PreIpsi', [501, 801], 'Ipsi', [751, 851], 'PostIpsi', [801, 1101], 'PreCL1', [760, 830], 'CL', [1385, 1485], 'PostCL1', [2330, 2480], 'Final', [2100,2400]};
+configuration.resampleData = @(fpa) fpa.resample(frequency);
+configuration.smoothSignal = @(fpa, time, data) fpa.lowpass(time, data, 0.1);
+configuration.smoothReference = @(fpa, time, data) fpa.lowpass(time, data, 0.1);
+configuration.smoothF = @(fpa, time, data) fpa.lowpass(time, data, 10);
 % Use a portion of the data to model and correct for photo-bleaching. Signal uses only baselineEpoch1 while reference uses baselineEpoch1 and baselineEpoch2.
-configuration.baselineEpochs = {baselineEpoch1, [baselineEpoch1, baselineEpoch2]};
+configuration.getPeaks = @(fpa) fpa.findPeaks('prominence', 0.5, 4 * std(data(fpa.ids(thresholdEpochs)) - movmedian(data(fpa.ids(thresholdEpochs)), round(thresholdWindow * frequency))));
+% Modify baseline correction so that bleaching estimated from reference is subtracted from both signal and reference.
+configuration.modelSignal = @(fpa, time, data) fpa.fit(time, data, 'exp1', baselineEpoch1);
+configuration.modelReference = @(fpa, time, data) fpa.fit(time, data, 'exp1', [baselineEpoch1, baselineEpoch2]);
+configuration.correctSignal = @(fpa) fpa.signalTrimmed - fpa.signalModeled;
+configuration.correctReference = @(fpa) fpa.referenceTrimmed - fpa.referenceModeled;
+% Use a portion of the data to compute a modified z-score.
+configuration.normalizeF = @(fpa, time, data) fpa.normalize(time, data, {@median, baselineEpoch1}, {@mad, baselineEpoch1});
 
 % Load behavioral data.
 if isfile(dlcFile)
-    dlc = loadDLC(dlcFile);
+    dlc = DLC.load(dlcFile);
     
     % Choose x and y for body position.
     x = dlc.bodypart2_x / ppcm;
@@ -113,29 +110,39 @@ end
 
 % Call FPA with given configuration.
 lesionFpa = FPA(time, lesion465, lesion405, configuration);
-cellfun(@warning, lesionFpa.warnings);
 nonLesionFpa = FPA(time, nonlesion465, nonlesion405, configuration);
-cellfun(@warning, nonLesionFpa.warnings);
 
 % Plot all fpa related figures.
 lesionFpa.plotTrace();
 lesionFpa.plotStatistics();
+lesionFpa.plotPowerSpectrum();
 nonLesionFpa.plotTrace();
 nonLesionFpa.plotStatistics();
+nonLesionFpa.plotPowerSpectrum();
 
 %% Option 1 - Save all FPA data.
-lesionFpa.export([session, ' - lesion']);
-nonLesionFpa.export([session, ' - non-lesion']);
+prefix = [session, ' - lesion '];
+lesionFpa.exportAUC([prefix, 'AUC.csv']);
+lesionFpa.exportF([prefix, 'F.csv']);
+lesionFpa.exportStatistics([prefix, 'Stats.csv']);
+lesionFpa.exportPeaks([prefix, 'Peaks.csv'], peakWindow);
+lesionFpa.exportPeakAverage([prefix, 'Peak average.csv'], peakWindow);
+prefix = [session, ' - non-lesion '];
+nonLesionFpa.exportAUC([prefix, 'AUC.csv']);
+nonLesionFpa.exportF([prefix, 'F.csv']);
+nonLesionFpa.exportStatistics([prefix, 'Stats.csv']);
+nonLesionFpa.exportPeaks([prefix, 'Peaks.csv'], peakWindow);
+nonLesionFpa.exportPeakAverage([prefix, 'Peak average.csv'], peakWindow);
 
 %% Option 2 - Save dff with lower sampling rate for plotting.
 samplingRate = 10;
 filename = fullfile(folder, sprintf('%s - dff plot - lesion.csv', session));
-export(filename, lesionFpa.time, lesionFpa.dff, samplingRate);
+export(filename, lesionFpa.timeResampled, lesionFpa.fNormalized, samplingRate);
 
 %% Locomotion trace.
 figure();
-ids1 = time2id(t1(1:end-1), sampleRange);
-ids2 = time2id(t2(1:end-1), sampleRange);
+ids1 = FPA.Ids(t1(1:end-1), sampleRange);
+ids2 = FPA.Ids(t2(1:end-1), sampleRange);
 ax = NaN(1, 2);
 ax(1) = subplot(1, 2, 1);
 plot(x(ids1), y(ids1));
@@ -160,12 +167,12 @@ xlabel('time (s)');
 ylabel('Locomotion (cm)');
 
 % Total locomotion for individual epochs.
-nEpochs = numel(configuration.conditionEpochs) / 2;
-labels = configuration.conditionEpochs(1:2:end);
+nEpochs = numel(configuration.epochs) / 2;
+labels = configuration.epochs(1:2:end);
 locomotion = zeros(nEpochs, 1);
 for e = 1:nEpochs
-    range = configuration.conditionEpochs{2 * e - 0};
-    k = time2id(t2, range);
+    range = configuration.epochs{2 * e - 0};
+    k = FPA.Ids(t2, range);
     locomotion(e) = sum(delta(k));
 end
 figure()
@@ -178,7 +185,7 @@ grid('on');
 grid('minor');
 
 %% Locomotion heatmap.
-ids = time2id(t2(1:end-1), sampleRange);
+ids = FPA.Ids(t2(1:end-1), sampleRange);
 xlims = [0, arenaSize(1)] + min(x);
 ylims = [0, arenaSize(2)] + min(y);
 xEdges = linspace(xlims(1), xlims(2), heatmapBinCount);
@@ -207,9 +214,9 @@ ylabel('v (cm/s)');
 axis('tight');
 
 %% Cross-correlations.
-ids = time2id(t2(1:end-1), sampleRange);
-[xc1,    ~] = xcorr(nonLesionFpa.dff(ids), speed(1:numel(nonLesionFpa.dff(ids))), round(maxXCorrLag * frequency), 'normalized');
-[xc2, lags] = xcorr(lesionFpa.dff(ids), speed(1:numel(lesionFpa.dff(ids))), round(maxXCorrLag * frequency), 'normalized');
+ids = FPA.Ids(t2(1:end-1), sampleRange);
+[xc1,    ~] = xcorr(nonLesionFpa.fNormalized(ids), speed(1:numel(nonLesionFpa.fNormalized(ids))), round(maxXCorrLag * frequency), 'normalized');
+[xc2, lags] = xcorr(lesionFpa.fNormalized(ids), speed(1:numel(lesionFpa.fNormalized(ids))), round(maxXCorrLag * frequency), 'normalized');
 figure();
 subplot(2, 2, 1);
 plot(lags / frequency, xc1, 'b');

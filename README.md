@@ -1,8 +1,8 @@
 # Changes in locomotion and spreading depolarizations after photothrombosis
-Analysis scripts related to the manuscript "Unilateral hippocampal stroke in freely behaving mice reveals sex differences in contralesional spreading depolarization and related behaviour"
+Analysis scripts related to the manuscript "Unilateral hippocampal stroke in freely behaving mice reveals sex differences in contralesional spreading depolarization and associated behaviour"
 
 ## Prerequisites
-- [MATLAB][MATLAB] (last tested with R2023a)
+- [MATLAB][MATLAB] (last tested with R2023b)
 - [FPA library][FPA]
 
 ## Installation
