@@ -1,11 +1,11 @@
 % 2023-08-29. Wilten Nicola.
-% 2023-09-01. Last modified.
+% 2024-09-25. Last modified.
 
 %% Setup.
 cons = {'sitting', 'rearing', 'moving', 'grooming'};
 
 % Search for xlsx files staring with F in the example folder.
-files = dir('../downloads/spreading-depolarization-data-0.0.1/data/F*.xlsx');
+files = dir('../downloads/spreading-depolarization-data-0.0.2/data/F*.xlsx');
 
 % Load xlsx files in a specified folder.
 nFiles = numel(files);

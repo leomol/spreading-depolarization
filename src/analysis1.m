@@ -1,6 +1,6 @@
 % Usage:
-%   First time ever:
-%     -Install toolboxes: Curve Fitting, Signal Processing, Statistics and Machine Learning.
+%   First time:
+%     -Install toolboxes: Curve Fitting, Signal Processing, Statistics and Machine Learning, Chronux.
 %     -Download and extract FPA from github.com/leomol/FPA, move it to Documents/MATLAB.
 %   Every time MATLAB is reopened:
 %     -run startup.m under Documents/MATLAB/FPA
@@ -11,13 +11,21 @@
 % Interpolation is not possible at the edges. These data is removed from both position and PF traces.
 
 % 2022-12-07. Leonardo Molina.
-% 2023-11-10. Last modified.
+% 2024-09-25. Last modified.
 
 %% Configuration.
 % Path to files containing fibre-photometry and dlc data (e.g. data/F46-doric.csv, data/F46-dlc.csv, ...)
-fpFile = '../downloads/spreading-depolarization-data-0.0.1/data/F46-doric.csv';
-dlcFile = '../downloads/spreading-depolarization-data-0.0.1/data/F46-dlc.csv';
-[folder, session] = fileparts(fpFile);
+fpFile = '../downloads/spreading-depolarization-data-0.0.2/data/F46-doric.csv';
+dlcFile = '../downloads/spreading-depolarization-data-0.0.2/data/F46-dlc.csv';
+outputFolder = 'outputs';
+
+% Create output folder.
+d = warning('QUERY', 'MATLAB:MKDIR:DirectoryExists');
+warning('off', 'MATLAB:MKDIR:DirectoryExists');
+mkdir(outputFolder);
+warning(d.state, 'MATLAB:MKDIR:DirectoryExists');
+
+[~, session] = fileparts(fpFile);
 % Number of pixels per cm.
 ppcm = 15.40;
 
@@ -36,8 +44,8 @@ data = CSV.load(fpFile);
 time = data(:, 1);
 lesion465 = data(:, 2);
 lesion405 = data(:, 3);
-nonlesion465 = data(:, 4);
-nonlesion405 = data(:, 5);
+nonLesion465 = data(:, 4);
+nonLesion405 = data(:, 5);
 
 % Position data from a DLC file.
 % Arena size (cm).
@@ -101,8 +109,8 @@ if isfile(dlcFile)
     time = time(k1);
     lesion465 = lesion465(k1);
     lesion405 = lesion405(k1);
-    nonlesion465 = nonlesion465(k1);
-    nonlesion405 = nonlesion405(k1);
+    nonLesion465 = nonLesion465(k1);
+    nonLesion405 = nonLesion405(k1);
 else
     fprintf(2, '"%s" not found.\n', dlcFile);
     t2 = time;
@@ -110,7 +118,7 @@ end
 
 % Call FPA with given configuration.
 lesionFpa = FPA(time, lesion465, lesion405, configuration);
-nonLesionFpa = FPA(time, nonlesion465, nonlesion405, configuration);
+nonLesionFpa = FPA(time, nonLesion465, nonLesion405, configuration);
 
 % Plot all fpa related figures.
 lesionFpa.plotTrace();
@@ -122,21 +130,19 @@ nonLesionFpa.plotPowerSpectrum();
 
 %% Option 1 - Save all FPA data.
 prefix = [session, ' - lesion '];
-lesionFpa.exportAUC([prefix, 'AUC.csv']);
-lesionFpa.exportF([prefix, 'F.csv']);
-lesionFpa.exportStatistics([prefix, 'Stats.csv']);
-lesionFpa.exportPeaks([prefix, 'Peaks.csv'], peakWindow);
-lesionFpa.exportPeakAverage([prefix, 'Peak average.csv'], peakWindow);
+lesionFpa.exportF(fullfile(outputFolder, [prefix, 'F.csv']));
+lesionFpa.exportStatistics(fullfile(outputFolder, [prefix, 'Stats.csv']));
+lesionFpa.exportPeaks(fullfile(outputFolder, [prefix, 'Peaks.csv']), peakWindow);
+lesionFpa.exportPeakAverage(fullfile(outputFolder, [prefix, 'Peak average.csv']), peakWindow);
 prefix = [session, ' - non-lesion '];
-nonLesionFpa.exportAUC([prefix, 'AUC.csv']);
-nonLesionFpa.exportF([prefix, 'F.csv']);
-nonLesionFpa.exportStatistics([prefix, 'Stats.csv']);
-nonLesionFpa.exportPeaks([prefix, 'Peaks.csv'], peakWindow);
-nonLesionFpa.exportPeakAverage([prefix, 'Peak average.csv'], peakWindow);
+nonLesionFpa.exportF(fullfile(outputFolder, [prefix, 'F.csv']));
+nonLesionFpa.exportStatistics(fullfile(outputFolder, [prefix, 'Stats.csv']));
+nonLesionFpa.exportPeaks(fullfile(outputFolder, [prefix, 'Peaks.csv']), peakWindow);
+nonLesionFpa.exportPeakAverage(fullfile(outputFolder, [prefix, 'Peak average.csv']), peakWindow);
 
 %% Option 2 - Save dff with lower sampling rate for plotting.
 samplingRate = 10;
-filename = fullfile(folder, sprintf('%s - dff plot - lesion.csv', session));
+filename = fullfile(outputFolder, sprintf('%s - dff plot - lesion.csv', session));
 export(filename, lesionFpa.timeResampled, lesionFpa.fNormalized, samplingRate);
 
 %% Locomotion trace.
@@ -234,6 +240,7 @@ plot([0, 0], [mn, mx], 'Color', [0.50, 0.50, 0.50], 'LineStyle', '--', 'Marker',
 axis('tight');
 legend('show');
 
+%% Helper functions.
 function export(output, time, x, frequency, header)
     [p, q] = rat(frequency * median(diff(time)));
     [x, time] = resample(x, time, frequency, p, q);
